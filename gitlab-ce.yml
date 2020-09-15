@@ -1,0 +1,47 @@
+- name: Setup Gitlab on Ubuntu
+  hosts: all
+  become: true
+  tasks:
+    - name: install required packages
+      apt:
+        pkg:
+          - curl
+          - openssh-server
+          - ca-certificates
+          - tzdata
+        state: latest
+        update_cache: true
+    - name: download gitlab script
+      get_url:
+        url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+        dest: /root/script.deb.sh
+        mode: '0550'
+    - name: run gitlab script
+      command: /root/script.deb.sh
+      args:
+        creates: /root/script.deb.sh.done
+    - name: touch /root/script.deb.sh.done
+      command: touch /root/script.deb.sh.done
+      args:
+        creates: /root/script.deb.sh.done
+        warn: false
+    - name: install gitlab-ce
+      apt:
+        pkg:
+          - gitlab-ce
+        state: latest
+        update_cache: true
+    - name: modify gitlab config
+      lineinfile:
+        path: /etc/gitlab/gitlab.rb
+        regexp: '^external_url '
+        line: external_url 'http://{{ansible_host}}'
+    - name: reconfigure gitlab
+      command: gitlab-ctl reconfigure
+      args:
+        creates: /root/gitlab.config.done
+    - name: touch /root/gitlab.config.done
+      command: touch /root/gitlab.config.done
+      args:
+        creates: /root/gitlab.config.done
+        warn: false
