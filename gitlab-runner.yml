@@ -28,8 +28,15 @@
       apt:
         pkg:
           - docker-ce
+          - docker-ce-cli
+          - containerd.io
         state: latest
         update_cache: true
+    - name: enable docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
     - name: download gitlab runner
       get_url:
         url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
@@ -40,7 +47,7 @@
         name: gitlab-runner
         shell: /bin/bash
         home: /home/gitlab-runner
-        groups: sudo
+        groups: sudo,docker
         create_home: true
         append: true
         comment: GitLab Runner
