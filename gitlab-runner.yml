@@ -1,0 +1,52 @@
+- name: Setup Gitlab runner on Ubuntu focal
+  hosts: runner
+  become: true
+  tasks:
+    - name: install required packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+          - openssh-server
+          - software-properties-common
+          - tzdata
+        state: latest
+        update_cache: true
+    - name: import docker gpg key
+      apt_key:
+        id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    - name: add the source list for docker
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+        filename: docker
+    - name: install docker-ce
+      apt:
+        pkg:
+          - docker-ce
+        state: latest
+        update_cache: true
+    - name: download gitlab runner
+      get_url:
+        url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+        dest: /usr/local/bin/gitlab-runner
+        mode: '0755'
+    - name: Add the user 'gitlab-runner' with a bash shell
+      user:
+        name: gitlab-runner
+        shell: /bin/bash
+        home: /home/gitlab-runner
+        groups: sudo
+        create_home: true
+        append: true
+        comment: GitLab Runner
+    - name: install gitlab runner
+      command: gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
+      args:
+        creates: /etc/systemd/system/gitlab-runner.service
+    - name: start gitlab runner
+      command: gitlab-runner start

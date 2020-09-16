@@ -1,5 +1,5 @@
 - name: Setup Gitlab on Ubuntu
-  hosts: all
+  hosts: server
   become: true
   tasks:
     - name: install required packages
